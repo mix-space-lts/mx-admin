@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## LTS Migration (2026-07-09)
+
+> This is a fork of [mx-space/mx-admin](https://github.com/mx-space/mx-admin) maintained under the Mix Space LTS project.
+> See [github.com/mix-space-lts](https://github.com/mix-space-lts) for details.
+
+### CI/CD
+
+- Added `workflow_dispatch` trigger to `build.yml` and `release.yml`
+
+### Rebranding
+
+- `README.md`: clone URL updated from `mx-space/mx-admin` to `mix-space-lts/mx-admin`; added LTS maintenance fork note
+
 # [6.4.0](https://github.com/mx-space/admin-vue3/compare/v6.3.0...v6.4.0) (2026-03-14)
 
 
