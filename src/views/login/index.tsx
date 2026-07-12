@@ -59,6 +59,7 @@ export const LoginView = defineComponent({
     const inputRef = ref<HTMLInputElement | null>(null)
     const password = ref('')
     const isLoading = ref(false)
+    const pendingExternalRedirect = ref<string | null>(null)
 
     onBeforeMount(async () => {
       const isInit = await checkIsInit()
@@ -68,7 +69,23 @@ export const LoginView = defineComponent({
       await userStore.fetchUser()
     })
 
-    onMounted(() => {
+    onMounted(async () => {
+      const from = route.query.from
+        ? decodeURI(route.query.from as string)
+        : null
+
+      if (from && /^https?:\/\//.test(from)) {
+        try {
+          const { ok } = await userApi.checkLogged()
+          if (ok) {
+            pendingExternalRedirect.value = from
+            return
+          }
+        } catch {
+          // not logged in, show login form normally
+        }
+      }
+
       const focusInput = () => {
         inputRef.value?.focus()
       }
@@ -82,9 +99,28 @@ export const LoginView = defineComponent({
     })
 
     const postSuccessfulLogin = () => {
-      router.push(
-        route.query.from ? decodeURI(route.query.from as string) : '/dashboard',
-      )
+      const from = route.query.from
+        ? decodeURI(route.query.from as string)
+        : null
+
+      if (from && /^https?:\/\//.test(from)) {
+        pendingExternalRedirect.value = from
+        return
+      }
+
+      router.push(from || '/dashboard')
+      sessionStorage.setItem(SESSION_WITH_LOGIN, '1')
+      toast.success('欢迎回来')
+    }
+
+    const confirmExternalRedirect = () => {
+      const url = pendingExternalRedirect.value
+      if (url) location.replace(url)
+    }
+
+    const cancelExternalRedirect = () => {
+      pendingExternalRedirect.value = null
+      router.push('/dashboard')
       sessionStorage.setItem(SESSION_WITH_LOGIN, '1')
       toast.success('欢迎回来')
     }
@@ -153,6 +189,50 @@ export const LoginView = defineComponent({
     }
 
     return () => {
+      const fromHost = pendingExternalRedirect.value
+        ? (() => {
+            try {
+              return new URL(pendingExternalRedirect.value).host
+            } catch {
+              return pendingExternalRedirect.value
+            }
+          })()
+        : ''
+
+      if (pendingExternalRedirect.value) {
+        return (
+          <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div class="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl dark:bg-neutral-800">
+              <p class="text-lg font-medium text-neutral-900 dark:text-white">
+                确认登录
+              </p>
+              <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
+                你正在登录到{' '}
+                <span class="font-semibold text-neutral-900 dark:text-white">
+                  {fromHost}
+                </span>
+              </p>
+              <div class="mt-6 flex justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={cancelExternalRedirect}
+                  class="rounded-full px-5 py-2 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-700"
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmExternalRedirect}
+                  class="bg-primary rounded-full px-5 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                >
+                  确认跳转
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
       const showPasswordInput =
         typeof settings.value === 'undefined' ||
         settings.value?.password === true

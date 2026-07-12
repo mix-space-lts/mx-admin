@@ -1,3 +1,4 @@
+import { API_URL } from '~/constants/env'
 import { request } from '~/utils/request'
 
 export interface AppInfo {
@@ -38,13 +39,33 @@ export const systemApi = {
   // 获取应用信息
   getAppInfo: () => request.get<AppInfo>('/'),
 
-  // 检查是否已初始化（静默错误）
+  /**
+   * 检查系统是否已初始化。
+   *
+   * /init 的语义：200 = 未初始化，404 = 已初始化。
+   * 但 ofetch 的全局 onResponseError 会对所有非 2xx 弹 toast，而这里的 404 是
+   * 正常语义不该弹，所以先用原生 fetch 静默探测一次：
+   *   - 404 → 已初始化，直接返回，不触发 toast
+   *   - 非 404 → 交给 ofetch 正式请求，保留 502 toast、401 跳登录等错误处理
+   *
+   * 两次请求非原子，但后台低频单人调用，且最坏只是多弹一个 404 toast，无害。
+   */
   checkInit: async (): Promise<{ isInit: boolean }> => {
+    // 先静默探测——404 = 已初始化，不做任何 toast
+    try {
+      const probe = await fetch(`${API_URL}/init?t=${Date.now()}`, {
+        credentials: 'include',
+      })
+      if (probe.status === 404) return { isInit: true }
+    } catch {
+      // 网络不通，交给下面的正式请求去报错
+    }
+
+    // 非 404 → 正常走 ofetch，保留全局拦截器的 toast / 401 处理
     try {
       return await request.get<{ isInit: boolean }>('/init')
     } catch (error: any) {
-      // 404 或 403 表示已初始化
-      if (error?.statusCode === 404 || error?.statusCode === 403) {
+      if (error?.statusCode === 404 || error?.status === 404) {
         return { isInit: true }
       }
       throw error
