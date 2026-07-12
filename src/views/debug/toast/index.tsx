@@ -97,12 +97,16 @@ export default defineComponent({
               <NSpace>
                 <NButton
                   onClick={() => {
+                    let timer: ReturnType<typeof setTimeout>
                     const id = toast.success('3 秒后自动关闭', {
                       duration: Infinity,
+                      onDismiss: () => {
+                        clearTimeout(timer)
+                        toast.info('已关闭')
+                      },
                     })
-                    setTimeout(() => {
+                    timer = setTimeout(() => {
                       toast.dismiss(id)
-                      toast.info('已关闭')
                     }, 3000)
                   }}
                 >
