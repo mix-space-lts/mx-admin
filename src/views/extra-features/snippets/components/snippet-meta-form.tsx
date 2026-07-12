@@ -156,18 +156,8 @@ export const SnippetMetaForm = defineComponent({
           </div>
         )}
 
-        <div class="grid grid-cols-2 gap-x-4 gap-y-4">
-          <FormField label="名称" required>
-            <NInput
-              value={props.data.name}
-              onUpdateValue={(v) => updateField('name', v)}
-              disabled={props.isBuiltFunction}
-              placeholder="片段名称"
-              size="small"
-            />
-          </FormField>
-
-          <FormField label="引用" required tooltip="用于分组和 API 调用">
+        <div class="grid grid-cols-2 gap-4">
+          <FormField label="引用" required tooltip="父级路由">
             <NInput
               value={props.data.reference}
               onUpdateValue={(v) => updateField('reference', v)}
@@ -177,18 +167,30 @@ export const SnippetMetaForm = defineComponent({
             />
           </FormField>
 
-          <FormField
-            label="自定义路径"
-            tooltip="设置后可通过 /s/{customPath} 访问，留空使用 /{reference}/{name}"
-          >
+          <FormField label="名称" required tooltip="子级路由">
             <NInput
-              value={props.data.customPath}
-              onUpdateValue={(v) => updateField('customPath', v || undefined)}
-              placeholder="如 my-api/config"
+              value={props.data.name}
+              onUpdateValue={(v) => updateField('name', v)}
+              disabled={props.isBuiltFunction}
+              placeholder="片段名称"
               size="small"
             />
           </FormField>
+        </div>
 
+        <FormField
+          label="自定义路径"
+          tooltip="设置后可通过 /s/{customPath} 访问，留空使用 /{reference}/{name}"
+        >
+          <NInput
+            value={props.data.customPath}
+            onUpdateValue={(v) => updateField('customPath', v || undefined)}
+            placeholder="如 my-api/config"
+            size="small"
+          />
+        </FormField>
+
+        <div class="grid grid-cols-2 gap-4">
           <FormField label="类型">
             <NSelect
               value={props.data.type}
