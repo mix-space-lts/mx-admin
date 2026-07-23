@@ -3,12 +3,12 @@ import { octokit } from './octokit'
 
 export const checkUpdateFromGitHub = async () => {
   const { data: system } = await octokit.rest.repos.getLatestRelease({
-    owner: 'mx-space',
-    repo: 'mx-server',
+    owner: 'mix-space-lts',
+    repo: 'core',
   })
 
   const { data: dashboard } = await octokit.rest.repos.getLatestRelease({
-    owner: 'mx-space',
+    owner: 'mix-space-lts',
     repo: PKG.name,
   })
 
@@ -21,11 +21,11 @@ export const checkUpdateFromGitHub = async () => {
 }
 
 export const getReleaseDetails = async (
-  repo: 'mx-server' | 'mx-admin',
+  repo: 'core' | 'mx-admin',
   tagName: string,
 ) => {
   const { data } = await octokit.rest.repos.getReleaseByTag({
-    owner: 'mx-space',
+    owner: 'mix-space-lts',
     repo,
     tag: `v${tagName}`,
   })
